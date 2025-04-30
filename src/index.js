@@ -3,12 +3,11 @@ const { fetchRecipe } = require('./fetchRecipe');
 const { mapIngredients } = require('./mapIngredients');
 const { classifyDish } = require('./classifyDish');
 
-// 💡 Utility function to calculate overall nutrition safely
+const app = express();
+const PORT = process.env.PORT || 3000;
+
 function calculateNutrition(mappedIngredients) {
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFat = 0;
+    let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
 
     for (const item of mappedIngredients) {
         const nut = item.totalNutrition || {};
@@ -26,23 +25,11 @@ function calculateNutrition(mappedIngredients) {
     };
 }
 
-// Create an Express app
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());  // For parsing JSON bodies
-
-// Define the root route ("/")
-app.get('/', (req, res) => {
-    res.send("🧠 Welcome to VYB AI Dish Nutrition Estimator!");
-});
-
-// Define the POST route to estimate nutrition
-app.post('/estimate', async (req, res) => {
-    const { dishName } = req.body;
+app.get('/estimate', async (req, res) => {
+    const dishName = req.query.dish;
 
     if (!dishName) {
-        return res.status(400).json({ error: "Dish name is required" });
+        return res.status(400).json({ error: "Dish name is required as a query param (?dish=poha)" });
     }
 
     try {
@@ -57,14 +44,16 @@ app.post('/estimate', async (req, res) => {
             ingredients_used: mappedIngredients
         };
 
-        res.json(output);  // Respond with the nutrition estimate
+        res.json(output);
     } catch (error) {
-        console.error('❌ Error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Start the server
+app.get('/', (req, res) => {
+    res.send("🧠 Welcome to VYB AI Dish Nutrition Estimator! Use /estimate?dish=poha to get data.");
+});
+
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
