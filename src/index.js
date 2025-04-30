@@ -1,7 +1,7 @@
+const express = require('express');
 const { fetchRecipe } = require('./fetchRecipe');
-const { mapIngredients }  = require('./mapIngredients');
+const { mapIngredients } = require('./mapIngredients');
 const { classifyDish } = require('./classifyDish');
-const readline = require('readline');
 
 // 💡 Utility function to calculate overall nutrition safely
 function calculateNutrition(mappedIngredients) {
@@ -26,7 +26,25 @@ function calculateNutrition(mappedIngredients) {
     };
 }
 
-async function main(dishName) {
+// Create an Express app
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());  // For parsing JSON bodies
+
+// Define the root route ("/")
+app.get('/', (req, res) => {
+    res.send("🧠 Welcome to VYB AI Dish Nutrition Estimator!");
+});
+
+// Define the POST route to estimate nutrition
+app.post('/estimate', async (req, res) => {
+    const { dishName } = req.body;
+
+    if (!dishName) {
+        return res.status(400).json({ error: "Dish name is required" });
+    }
+
     try {
         const recipe = await fetchRecipe(dishName);
         const mappedIngredients = await mapIngredients(recipe);
@@ -39,21 +57,14 @@ async function main(dishName) {
             ingredients_used: mappedIngredients
         };
 
-        console.log("\n✅ Nutrition Estimate:");
-        console.log(JSON.stringify(output, null, 2));
+        res.json(output);  // Respond with the nutrition estimate
     } catch (error) {
         console.error('❌ Error:', error.message);
+        res.status(500).json({ error: error.message });
     }
-}
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
 });
 
-console.log("🧠 Welcome to VYB AI Dish Nutrition Estimator!");
-
-rl.question('🍽️ Enter a dish name to estimate its nutrition: ', (dishName) => {
-    main(dishName.trim());
-    rl.close();
+// Start the server
+app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
 });
