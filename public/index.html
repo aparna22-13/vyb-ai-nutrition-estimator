@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VYB AI Nutrition Estimator</title>
+</head>
+<body>
+  <h1>Welcome to VYB AI Dish Nutrition Estimator!</h1>
+  <form id="dish-form">
+    <label for="dish">Enter a dish name:</label>
+    <input type="text" id="dish" name="dish" required>
+    <button type="submit">Get Nutrition Info</button>
+  </form>
+
+  <div id="result">
+    <h2>Nutrition Details:</h2>
+    <pre id="nutrition-output"></pre>
+  </div>
+
+  <script>
+    document.getElementById("dish-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const dishName = document.getElementById("dish").value.trim();
+      if (!dishName) return;
+
+      const response = await fetch(`/estimate?dish=${encodeURIComponent(dishName)}`);
+      const data = await response.json();
+      
+      // Display results or error message
+      const resultDiv = document.getElementById("result");
+      const output = document.getElementById("nutrition-output");
+      
+      if (data.error) {
+        output.textContent = `Error: ${data.error}`;
+      } else {
+        output.textContent = JSON.stringify(data, null, 2);
+      }
+    });
+  </script>
+</body>
+</html>
